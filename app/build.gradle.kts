@@ -1,11 +1,11 @@
 plugins {
     alias(libs.plugins.android.application)
-    id("com.google.gms.google-services")
     id("org.jetbrains.kotlin.plugin.compose")
+    id("com.google.gms.google-services")
 }
 
 android {
-    namespace = "com.example.app_contactos"
+    namespace = "com.example.appcontactos"
     compileSdk = 37
 
     defaultConfig {

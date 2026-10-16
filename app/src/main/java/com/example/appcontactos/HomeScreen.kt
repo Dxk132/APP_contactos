@@ -1,4 +1,4 @@
-package com.example.app_contactos
+package com.example.appcontactos
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
