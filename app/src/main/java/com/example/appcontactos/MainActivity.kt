@@ -4,9 +4,13 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.Composable
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import com.example.appcontactos.ui.AddEditNoteScreen
+import com.example.appcontactos.ui.NoteDetailScreen
 import com.google.firebase.auth.FirebaseAuth
 
 class MainActivity : ComponentActivity() {
@@ -52,7 +56,41 @@ fun MyAppNavGraph() {
                     navController.navigate(Screen.Login.route) {
                         popUpTo(Screen.Home.route) { inclusive = true }
                     }
+                },
+                onNavigateToAddNote = {
+                    navController.navigate(Screen.AddNote.route)
+                },
+                onNavigateToNoteDetail = { noteId ->
+                    navController.navigate(Screen.NoteDetail.createRoute(noteId))
                 }
+            )
+        }
+        composable(Screen.AddNote.route) {
+            AddEditNoteScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+        composable(
+            route = Screen.NoteDetail.route,
+            arguments = listOf(navArgument("noteId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val noteId = backStackEntry.arguments?.getString("noteId") ?: ""
+            NoteDetailScreen(
+                noteId = noteId,
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToEdit = { id ->
+                    navController.navigate(Screen.EditNote.createRoute(id))
+                }
+            )
+        }
+        composable(
+            route = Screen.EditNote.route,
+            arguments = listOf(navArgument("noteId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val noteId = backStackEntry.arguments?.getString("noteId")
+            AddEditNoteScreen(
+                noteId = noteId,
+                onNavigateBack = { navController.popBackStack() }
             )
         }
     }
