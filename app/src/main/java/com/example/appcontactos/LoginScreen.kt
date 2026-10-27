@@ -1,3 +1,4 @@
+// Requerimiento: Iniciar sesión - El sistema permitirá ingresar con credenciales válidas.
 package com.example.appcontactos
 
 import android.util.Patterns
