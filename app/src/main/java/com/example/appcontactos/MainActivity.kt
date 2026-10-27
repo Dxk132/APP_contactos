@@ -9,7 +9,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.appcontactos.ui.AddEditContactScreen
 import com.example.appcontactos.ui.AddEditNoteScreen
+import com.example.appcontactos.ui.ContactDetailScreen
 import com.example.appcontactos.ui.NoteDetailScreen
 import com.google.firebase.auth.FirebaseAuth
 
@@ -62,6 +64,12 @@ fun MyAppNavGraph() {
                 },
                 onNavigateToNoteDetail = { noteId ->
                     navController.navigate(Screen.NoteDetail.createRoute(noteId))
+                },
+                onNavigateToAddContact = {
+                    navController.navigate(Screen.AddContact.route)
+                },
+                onNavigateToContactDetail = { contactId ->
+                    navController.navigate(Screen.ContactDetail.createRoute(contactId))
                 }
             )
         }
@@ -90,6 +98,34 @@ fun MyAppNavGraph() {
             val noteId = backStackEntry.arguments?.getString("noteId")
             AddEditNoteScreen(
                 noteId = noteId,
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+        composable(Screen.AddContact.route) {
+            AddEditContactScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+        composable(
+            route = Screen.ContactDetail.route,
+            arguments = listOf(navArgument("contactId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val contactId = backStackEntry.arguments?.getString("contactId") ?: ""
+            ContactDetailScreen(
+                contactId = contactId,
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToEdit = { id ->
+                    navController.navigate(Screen.EditContact.createRoute(id))
+                }
+            )
+        }
+        composable(
+            route = Screen.EditContact.route,
+            arguments = listOf(navArgument("contactId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val contactId = backStackEntry.arguments?.getString("contactId")
+            AddEditContactScreen(
+                contactId = contactId,
                 onNavigateBack = { navController.popBackStack() }
             )
         }
