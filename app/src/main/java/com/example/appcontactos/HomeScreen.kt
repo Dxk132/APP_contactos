@@ -1,3 +1,4 @@
+// Requerimiento: Cerrar sesión - El usuario podrá finalizar su sesión y regresar a la pantalla de acceso.
 package com.example.appcontactos
 
 import android.content.Intent
