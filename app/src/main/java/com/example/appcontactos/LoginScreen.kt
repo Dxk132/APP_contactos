@@ -1,5 +1,6 @@
 package com.example.appcontactos
 
+import android.util.Patterns
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
@@ -10,6 +11,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
+import com.google.firebase.auth.FirebaseAuthInvalidUserException
 
 @Composable
 fun LoginScreen(
@@ -41,7 +44,10 @@ fun LoginScreen(
 
             OutlinedTextField(
                 value = email,
-                onValueChange = { email = it },
+                onValueChange = {
+                    email = it
+                    errorMessage = null
+                },
                 label = { Text("Correo Electrónico") },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
@@ -52,7 +58,10 @@ fun LoginScreen(
 
             OutlinedTextField(
                 value = password,
-                onValueChange = { password = it },
+                onValueChange = {
+                    password = it
+                    errorMessage = null
+                },
                 label = { Text("Contraseña") },
                 singleLine = true,
                 visualTransformation = PasswordVisualTransformation(),
@@ -61,38 +70,73 @@ fun LoginScreen(
             )
 
             if (errorMessage != null) {
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = errorMessage!!,
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodySmall
-                )
+                Spacer(modifier = Modifier.height(12.dp))
+                Surface(
+                    color = MaterialTheme.colorScheme.errorContainer,
+                    shape = MaterialTheme.shapes.small,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = errorMessage!!,
+                        color = MaterialTheme.colorScheme.onErrorContainer,
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(12.dp)
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(24.dp))
 
             Button(
                 onClick = {
-                    if (email.isBlank() || password.isBlank()) {
+                    val cleanEmail = email.trim()
+                    val cleanPassword = password.trim()
+
+                    if (cleanEmail.isBlank() || cleanPassword.isBlank()) {
                         errorMessage = "Por favor, completa todos los campos."
+                        return@Button
+                    }
+
+                    if (!Patterns.EMAIL_ADDRESS.matcher(cleanEmail).matches()) {
+                        errorMessage = "Ingresa un correo electrónico válido."
                         return@Button
                     }
 
                     isLoading = true
                     errorMessage = null
 
-                    FirebaseAuth.getInstance().signInWithEmailAndPassword(email.trim(), password.trim())
+                    FirebaseAuth.getInstance().signInWithEmailAndPassword(cleanEmail, cleanPassword)
                         .addOnCompleteListener { task ->
                             isLoading = false
                             if (task.isSuccessful) {
                                 onLoginSuccess()
                             } else {
-                                errorMessage = task.exception?.localizedMessage ?: "Error al iniciar sesión."
+                                val exception = task.exception
+                                errorMessage = when (exception) {
+                                    is FirebaseAuthInvalidUserException ->
+                                        "No existe ninguna cuenta registrada con este correo."
+                                    is FirebaseAuthInvalidCredentialsException ->
+                                        "La contraseña o el correo ingresados son incorrectos."
+                                    else -> {
+                                        val msg = exception?.localizedMessage ?: ""
+                                        if (msg.contains("CONFIGURATION_NOT_FOUND", ignoreCase = true)) {
+                                            "Firebase Authentication no está activado en la consola de Firebase.\n\nSolución: En Firebase Console -> Authentication -> haz clic en 'Comenzar' (Get started) y habilita el método 'Correo electrónico/Contraseña'."
+                                        } else if (msg.contains("disabled", ignoreCase = true) || msg.contains("provider", ignoreCase = true)) {
+                                            "El inicio de sesión con Correo/Contraseña está deshabilitado en Firebase Console. Actívalo en Authentication -> Sign-in method."
+                                        } else if (msg.contains("network", ignoreCase = true)) {
+                                            "Error de red. Verifica tu conexión a Internet."
+                                        } else {
+                                            msg.ifBlank { "Error al iniciar sesión." }
+                                        }
+                                    }
+                                }
                             }
                         }
                 },
                 enabled = !isLoading,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp)
             ) {
                 if (isLoading) {
                     CircularProgressIndicator(
