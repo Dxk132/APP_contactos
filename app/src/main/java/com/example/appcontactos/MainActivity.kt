@@ -1,3 +1,4 @@
+// Requerimiento: Mantener sesión - La aplicación reconocerá una sesión activa y evitará solicitar autenticación innecesariamente.
 package com.example.appcontactos
 
 import android.os.Bundle
