@@ -1,20 +1,21 @@
-// Requerimiento: Cerrar sesión - El usuario podrá finalizar su sesión y regresar a la pantalla de acceso.
 package com.example.appcontactos
 
 import android.content.Intent
 import android.net.Uri
 import android.text.format.DateFormat
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -46,9 +47,22 @@ fun HomeScreen(
     val userId = currentUser?.uid ?: ""
 
     var selectedTab by remember { mutableIntStateOf(0) } // 0 = Notas, 1 = Contactos
+    var selectedFilterCategory by remember { mutableStateOf("Todos") }
 
     val notesState by noteRepository.getNotesFlow(userId).collectAsState(initial = emptyList())
     val contactsState by contactRepository.getContactsFlow(userId).collectAsState(initial = emptyList())
+
+    val availableCategories = remember(contactsState) {
+        listOf("Todos") + (contactsState.map { it.category }.distinct().filter { it.isNotBlank() })
+    }
+
+    val filteredContacts = remember(contactsState, selectedFilterCategory) {
+        if (selectedFilterCategory == "Todos") {
+            contactsState
+        } else {
+            contactsState.filter { it.category.equals(selectedFilterCategory, ignoreCase = true) }
+        }
+    }
 
     var noteToDelete by remember { mutableStateOf<Note?>(null) }
     var contactToDelete by remember { mutableStateOf<Contact?>(null) }
@@ -141,7 +155,7 @@ fun HomeScreen(
                     }
                 }
             } else {
-                // Vista de Contactos
+                // Vista de Contactos con Filtro de Categorías
                 if (contactsState.isEmpty()) {
                     Column(
                         modifier = Modifier
@@ -162,17 +176,51 @@ fun HomeScreen(
                         )
                     }
                 } else {
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        items(contactsState, key = { it.id }) { contact ->
-                            ContactItemCard(
-                                contact = contact,
-                                onClick = { onNavigateToContactDetail(contact.id) },
-                                onDeleteClick = { contactToDelete = contact }
-                            )
+                    Column(modifier = Modifier.fillMaxSize()) {
+                        // Barra de Filtro de Categorías
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .horizontalScroll(rememberScrollState())
+                                .padding(horizontal = 16.dp, vertical = 8.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            availableCategories.forEach { category ->
+                                FilterChip(
+                                    selected = selectedFilterCategory == category,
+                                    onClick = { selectedFilterCategory = category },
+                                    label = { Text(category) }
+                                )
+                            }
+                        }
+
+                        if (filteredContacts.isEmpty()) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(24.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = "No hay contactos en la categoría '$selectedFilterCategory'.",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        } else {
+                            LazyColumn(
+                                modifier = Modifier.fillMaxSize(),
+                                contentPadding = PaddingValues(16.dp),
+                                verticalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                items(filteredContacts, key = { it.id }) { contact ->
+                                    ContactItemCard(
+                                        contact = contact,
+                                        onClick = { onNavigateToContactDetail(contact.id) },
+                                        onDeleteClick = { contactToDelete = contact }
+                                    )
+                                }
+                            }
                         }
                     }
                 }
@@ -359,6 +407,20 @@ fun ContactItemCard(
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+                if (contact.category.isNotBlank()) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Surface(
+                        color = MaterialTheme.colorScheme.secondaryContainer,
+                        shape = MaterialTheme.shapes.extraSmall
+                    ) {
+                        Text(
+                            text = contact.category,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        )
+                    }
+                }
             }
 
             Row {

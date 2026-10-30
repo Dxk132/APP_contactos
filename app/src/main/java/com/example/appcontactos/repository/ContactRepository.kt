@@ -89,6 +89,7 @@ class ContactRepository {
             "phone" to contact.phone,
             "email" to contact.email,
             "address" to contact.address,
+            "category" to contact.category,
             "timestamp" to System.currentTimeMillis()
         )
 

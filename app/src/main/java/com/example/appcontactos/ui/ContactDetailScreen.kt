@@ -149,6 +149,21 @@ fun ContactDetailScreen(
                             fontWeight = FontWeight.Bold
                         )
 
+                        if (currentContact.category.isNotBlank()) {
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Surface(
+                                color = MaterialTheme.colorScheme.secondaryContainer,
+                                shape = MaterialTheme.shapes.small
+                            ) {
+                                Text(
+                                    text = currentContact.category,
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                                )
+                            }
+                        }
+
                         Spacer(modifier = Modifier.height(24.dp))
 
                         Row(
@@ -189,6 +204,15 @@ fun ContactDetailScreen(
                             title = "Teléfono",
                             value = currentContact.phone
                         )
+
+                        if (currentContact.category.isNotBlank()) {
+                            Spacer(modifier = Modifier.height(16.dp))
+                            ContactDetailInfoRow(
+                                icon = Icons.Default.Edit,
+                                title = "Categoría / Etiqueta",
+                                value = currentContact.category
+                            )
+                        }
 
                         if (currentContact.email.isNotBlank()) {
                             Spacer(modifier = Modifier.height(16.dp))

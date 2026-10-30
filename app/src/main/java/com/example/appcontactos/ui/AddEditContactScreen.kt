@@ -1,5 +1,6 @@
 package com.example.appcontactos.ui
 
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
@@ -10,6 +11,7 @@ import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Phone
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -35,6 +37,13 @@ fun AddEditContactScreen(
     var email by remember { mutableStateOf("") }
     var address by remember { mutableStateOf("") }
 
+    val presetCategories = remember {
+        listOf("Familia", "Amigos", "Compañeros", "Clientes", "Profesores", "Trabajo")
+    }
+    var selectedCategory by remember { mutableStateOf("Familia") }
+    var customCategory by remember { mutableStateOf("") }
+    var isCustomCategory by remember { mutableStateOf(false) }
+
     var isLoadingContact by remember { mutableStateOf(contactId != null) }
     var isSaving by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
@@ -50,6 +59,14 @@ fun AddEditContactScreen(
                     phone = contact.phone
                     email = contact.email
                     address = contact.address
+
+                    if (presetCategories.contains(contact.category)) {
+                        selectedCategory = contact.category
+                        isCustomCategory = false
+                    } else if (contact.category.isNotBlank()) {
+                        isCustomCategory = true
+                        customCategory = contact.category
+                    }
                 } else {
                     errorMessage = "No se pudo cargar el contacto."
                 }
@@ -149,6 +166,52 @@ fun AddEditContactScreen(
                         modifier = Modifier.fillMaxWidth()
                     )
 
+                    Spacer(modifier = Modifier.height(20.dp))
+
+                    // Selección de Etiquetas Inteligentes
+                    Text(
+                        text = "Etiquetas inteligentes / Categoría",
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        presetCategories.forEach { category ->
+                            FilterChip(
+                                selected = !isCustomCategory && selectedCategory == category,
+                                onClick = {
+                                    isCustomCategory = false
+                                    selectedCategory = category
+                                },
+                                label = { Text(category) }
+                            )
+                        }
+                        FilterChip(
+                            selected = isCustomCategory,
+                            onClick = { isCustomCategory = true },
+                            label = { Text("Personalizado") }
+                        )
+                    }
+
+                    if (isCustomCategory) {
+                        Spacer(modifier = Modifier.height(12.dp))
+                        OutlinedTextField(
+                            value = customCategory,
+                            onValueChange = { customCategory = it },
+                            label = { Text("Escribe tu etiqueta personalizada") },
+                            leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+
                     if (errorMessage != null) {
                         Spacer(modifier = Modifier.height(12.dp))
                         Surface(
@@ -173,6 +236,11 @@ fun AddEditContactScreen(
                             val cleanPhone = phone.trim()
                             val cleanEmail = email.trim()
                             val cleanAddress = address.trim()
+                            val finalCategory = if (isCustomCategory) {
+                                customCategory.trim().ifBlank { "General" }
+                            } else {
+                                selectedCategory
+                            }
 
                             if (cleanName.isBlank() || cleanPhone.isBlank()) {
                                 errorMessage = "El Nombre y el Teléfono son campos obligatorios."
@@ -189,6 +257,7 @@ fun AddEditContactScreen(
                                     phone = cleanPhone,
                                     email = cleanEmail,
                                     address = cleanAddress,
+                                    category = finalCategory,
                                     userId = userId
                                 )
                                 repository.updateContact(updatedContact) { success, error ->
@@ -205,6 +274,7 @@ fun AddEditContactScreen(
                                     phone = cleanPhone,
                                     email = cleanEmail,
                                     address = cleanAddress,
+                                    category = finalCategory,
                                     userId = userId
                                 )
                                 repository.addContact(newContact) { success, error ->
