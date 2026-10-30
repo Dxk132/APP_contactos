@@ -1,3 +1,4 @@
+// Requerimiento: RF05 - Crear nota: El usuario podrá registrar una nueva nota.
 package com.example.appcontactos.ui
 
 import androidx.compose.foundation.layout.*

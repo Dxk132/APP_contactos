@@ -60,6 +60,7 @@ class NoteRepository {
             }
     }
 
+    // Requerimiento: RF05 - Crear nota: Permite registrar y guardar una nueva nota en Firestore.
     fun addNote(note: Note, onResult: (Boolean, String?) -> Unit) {
         if (note.userId.isEmpty()) {
             onResult(false, "Usuario no autenticado")
